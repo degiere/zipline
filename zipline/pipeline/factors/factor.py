@@ -1285,7 +1285,6 @@ class RecarrayFactor(SingleInputMixin, Factor):
     def __new__(cls, factor, attribute):
         return super(RecarrayFactor, cls).__new__(
             cls,
-            factor=factor,
             attribute=attribute,
             inputs=[factor],
             outputs=factor.outputs,
@@ -1294,16 +1293,14 @@ class RecarrayFactor(SingleInputMixin, Factor):
             missing_value=factor.missing_value,
         )
 
-    def _init(self, factor, attribute, *args, **kwargs):
-        self.parent = factor
+    def _init(self, attribute, *args, **kwargs):
         self.attribute = attribute
         return super(RecarrayFactor, self)._init(*args, **kwargs)
 
     @classmethod
-    def static_identity(cls, factor, attribute, *args, **kwargs):
+    def static_identity(cls, attribute, *args, **kwargs):
         return (
             super(RecarrayFactor, cls).static_identity(*args, **kwargs),
-            factor,
             attribute,
         )
 
