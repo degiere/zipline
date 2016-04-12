@@ -114,7 +114,8 @@ class CustomTermMixin(object):
         outputs = self.outputs
         if outputs:
             out = recarray(
-                mask.shape, dtype=zip(outputs, [self.dtype] * len(outputs)),
+                mask.shape,
+                dtype=zip(outputs, [self.dtype.str] * len(outputs)),
             )
             out[:] = array([missing_value])
         else:
