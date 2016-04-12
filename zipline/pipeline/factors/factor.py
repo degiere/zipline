@@ -8,7 +8,7 @@ from numbers import Number
 from numpy import inf, where
 from toolz import curry
 
-from zipline.errors import TermOutputsNotSpecified, UnknownRankMethod
+from zipline.errors import UnknownRankMethod
 from zipline.lib.normalize import naive_grouped_rowwise_apply
 from zipline.lib.rank import masked_rankdata_2d
 from zipline.pipeline.classifiers import Classifier, Everything, Quantiles
@@ -1278,8 +1278,8 @@ class RecarrayFactor(SingleInputMixin, Factor):
             cls,
             attribute=attribute,
             inputs=[factor],
-            outputs=factor.outputs,
             window_length=0,
+            mask=factor.mask,
             dtype=factor.dtype,
             missing_value=factor.missing_value,
         )
@@ -1294,11 +1294,6 @@ class RecarrayFactor(SingleInputMixin, Factor):
             super(RecarrayFactor, cls).static_identity(*args, **kwargs),
             attribute,
         )
-
-    def _validate(self):
-        super(RecarrayFactor, self)._validate()
-        if not self.outputs:
-            raise TermOutputsNotSpecified(termname=type(self).__name__)
 
     def _compute(self, windows, dates, assets, mask):
         return windows[0][self.attribute]
