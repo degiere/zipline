@@ -112,9 +112,10 @@ class CustomTermMixin(object):
         missing_value = self.missing_value
         params = self.params
         outputs = self.outputs
-        if outputs is not NotSpecified and len(outputs) > 1:
+        num_outputs = len(outputs)
+        if num_outputs > 1:
             out = recarray(
-                mask.shape, dtype=zip(outputs, [self.dtype] * len(outputs)),
+                mask.shape, dtype=zip(outputs, [self.dtype] * num_outputs),
             )
             out[:] = array([missing_value])
         else:

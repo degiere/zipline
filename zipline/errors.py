@@ -435,8 +435,8 @@ class TermInputsNotSpecified(ZiplineError):
 
 class TermOutputsNotSpecified(ZiplineError):
     """
-    Raised if a user attempts to construct a CustomFactor without specifying
-    enough outputs and that factor does not have class-level default outputs.
+    Raised if a user attempts to construct a term without specifying outputs
+    and that term does not have class-level default outputs.
     """
     msg = (
         "{termname} requires at least two outputs, but was given "
