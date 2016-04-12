@@ -373,7 +373,7 @@ class ComputableTerm(Term):
         if outputs is NotSpecified:
             outputs = cls.outputs
         if outputs is NotSpecified:
-            outputs = tuple()
+            outputs = ()
         else:
             outputs = tuple(outputs)
 

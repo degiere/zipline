@@ -1147,15 +1147,6 @@ class CustomFactor(PositiveWindowLengthMixin, CustomTermMixin, Factor):
         which ``mask`` produced True on the day for which compute is being
         called.
 
-    Returns
-    -------
-    output or outputs : zipline.pipeline.factors.CustomFactor or iterable of
-                        zipline.pipeline.factors.RecarrayFactor
-        The Factor instance(s) to be returned upon instantiation.
-        If passed an `outputs` argument, CustomFactor will return an iterable
-        of RecarrayFactors representing each output. If `outputs` is not
-        specified, it returns an instance of CustomFactor.
-
     Notes
     -----
     Users implementing their own Factors should subclass CustomFactor and
@@ -1306,11 +1297,8 @@ class RecarrayFactor(SingleInputMixin, Factor):
 
     def _validate(self):
         super(RecarrayFactor, self)._validate()
-        num_outputs = len(self.outputs)
-        if num_outputs < 2:
-            raise TermOutputsNotSpecified(
-                termname=type(self).__name__, num_outputs=num_outputs,
-            )
+        if not self.outputs:
+            raise TermOutputsNotSpecified(termname=type(self).__name__)
 
     def _compute(self, windows, dates, assets, mask):
         return windows[0][self.attribute]

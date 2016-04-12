@@ -439,8 +439,7 @@ class TermOutputsNotSpecified(ZiplineError):
     and that term does not have class-level default outputs.
     """
     msg = (
-        "{termname} requires at least two outputs, but was given "
-        "{num_outputs}."
+        "{termname} requires outputs, but no outputs list was passed."
     )
 
 
