@@ -1280,29 +1280,23 @@ class CustomFactor(PositiveWindowLengthMixin, CustomTermMixin, Factor):
         return iter(map(RecarrayFactor_, self.outputs))
 
 
-class RecarrayFactor(Factor):
-
-    siblings = {}
+class RecarrayFactor(SingleInputMixin, Factor):
 
     def __new__(cls, factor, attribute):
-        new_instance = super(RecarrayFactor, cls).__new__(
+        return super(RecarrayFactor, cls).__new__(
             cls,
             factor=factor,
             attribute=attribute,
-            inputs=factor.inputs,
+            inputs=[factor],
             outputs=factor.outputs,
-            window_length=factor.window_length,
+            window_length=0,
             dtype=factor.dtype,
             missing_value=factor.missing_value,
         )
-        cls.siblings.setdefault(factor, set()).add(new_instance)
-        return new_instance
 
     def _init(self, factor, attribute, *args, **kwargs):
-        self.factor = factor
+        self.parent = factor
         self.attribute = attribute
-        self.compute = factor.compute
-        self._compute = factor._compute
         return super(RecarrayFactor, self)._init(*args, **kwargs)
 
     @classmethod
@@ -1320,6 +1314,9 @@ class RecarrayFactor(Factor):
             raise TermOutputsNotSpecified(
                 termname=type(self).__name__, num_outputs=num_outputs,
             )
+
+    def _compute(self, windows, dates, assets, mask):
+        return windows[0][self.attribute]
 
 
 class Latest(LatestMixin, CustomFactor):

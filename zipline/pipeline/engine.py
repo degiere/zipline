@@ -348,19 +348,12 @@ class SimplePipelineEngine(object):
                 )
                 workspace.update(loaded)
             else:
-                term_output = term._compute(
+                workspace[term] = term._compute(
                     self._inputs_for_term(term, workspace, graph),
                     mask_dates,
                     assets,
                     mask,
                 )
-                if hasattr(term, 'siblings'):
-                    siblings = term.siblings[term.factor]
-                    while siblings:
-                        sibling = siblings.pop()
-                        workspace[sibling] = term_output[sibling.attribute]
-                else:
-                    workspace[term] = term_output
                 assert(workspace[term].shape == mask.shape)
 
         out = {}
