@@ -1248,8 +1248,8 @@ class CustomFactor(PositiveWindowLengthMixin, CustomTermMixin, Factor):
 
             def compute(self, today, assets, out, close):
                 computed_alpha, computed_beta = some_function(close)
-                out.alpha = computed_alpha
-                out.beta = computed_beta
+                out.alpha[:] = computed_alpha
+                out.beta[:] = computed_beta
 
         # Each output is returned as its own Factor upon instantiation.
         alpha, beta = MultipleOutputs()
