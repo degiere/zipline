@@ -13,6 +13,7 @@ from numpy import (
     concatenate,
     float32,
     full,
+    full_like,
     log,
     nan,
     tile,
@@ -544,14 +545,17 @@ class ConstantInputTestCase(TestCase):
     def test_factor_with_multiple_outputs(self):
         dates = self.dates[5:10]
         assets = self.assets
-        num_dates = len(dates)
+        asset_ids = self.asset_ids
         open = USEquityPricing.open
         close = USEquityPricing.close
-        open_values = array([self.constants[open]] * num_dates, dtype=float)
-        close_values = array([self.constants[close]] * num_dates, dtype=float)
+        constants = self.constants
         engine = SimplePipelineEngine(
             lambda column: self.loader, self.dates, self.asset_finder,
         )
+
+        def create_expected_results(expected_value, mask):
+            expected_values = where(mask, expected_value, nan)
+            return DataFrame(expected_values, index=dates, columns=assets)
 
         multiple_outputs = MultipleOutputs()
         open_price, close_price = MultipleOutputs()
@@ -569,61 +573,51 @@ class ConstantInputTestCase(TestCase):
         first_output_results = results['open_price'].unstack()
         second_output_results = results['close_price'].unstack()
 
-        first_output_expected = {asset: open_values for asset in assets}
-        second_output_expected = {asset: close_values for asset in assets}
-
-        assert_frame_equal(
-            first_output_results,
-            DataFrame(first_output_expected, index=dates, columns=assets),
+        first_output_expected = create_expected_results(
+            constants[open], full_like(first_output_results, True),
         )
-        assert_frame_equal(
-            second_output_results,
-            DataFrame(second_output_expected, index=dates, columns=assets),
+        second_output_expected = create_expected_results(
+            constants[close], full_like(second_output_results, True),
         )
-
-    def test_factor_with_multiple_outputs_and_mask(self):
-        dates = self.dates[5:10]
-        assets = self.assets
-        constants = self.constants
-        open = USEquityPricing.open
-        close = USEquityPricing.close
-        engine = SimplePipelineEngine(
-            lambda column: self.loader, self.dates, self.asset_finder,
-        )
-
-        def create_expected_results(expected_value, mask):
-            expected_values = where(mask, expected_value, nan)
-            return DataFrame(expected_values, index=dates, columns=assets)
-
-        mask = (AssetIDPlusDay() % 2).eq(0)
-        multiple_outputs = MultipleOutputs(mask=mask)
-        open_price, close_price = MultipleOutputs(mask=mask)
-
-        # Ensure that both methods of accessing our outputs return the same
-        # things.
-        self.assertIs(open_price, multiple_outputs.open)
-        self.assertIs(close_price, multiple_outputs.close)
-
-        pipeline = Pipeline(
-            columns={
-                'open_price': open_price,
-                'close_price': close_price,
-                'mask': mask,
-            },
-        )
-
-        results = engine.run_pipeline(pipeline, dates[0], dates[-1])
-        mask_results = results['mask'].unstack()
-        first_output_results = results['open_price'].unstack()
-        second_output_results = results['close_price'].unstack()
-
-        first_output_expected = create_expected_results(constants[open],
-                                                        mask_results)
-        second_output_expected = create_expected_results(constants[close],
-                                                         mask_results)
 
         assert_frame_equal(first_output_results, first_output_expected)
         assert_frame_equal(second_output_results, second_output_expected)
+
+        # Now test the same outputs again, but with a mask.
+        alternating_mask = (AssetIDPlusDay() % 2).eq(0)
+        cascading_mask = AssetIDPlusDay() < (asset_ids[-1] + dates[0].day)
+
+        for mask in (cascading_mask, alternating_mask):
+            multiple_outputs = MultipleOutputs(mask=mask)
+            open_price, close_price = MultipleOutputs(mask=mask)
+
+            # Ensure that both methods of accessing our outputs return the same
+            # things.
+            self.assertIs(open_price, multiple_outputs.open)
+            self.assertIs(close_price, multiple_outputs.close)
+
+            pipeline = Pipeline(
+                columns={
+                    'open_price': open_price,
+                    'close_price': close_price,
+                    'mask': mask,
+                },
+            )
+
+            results = engine.run_pipeline(pipeline, dates[0], dates[-1])
+            mask_results = results['mask'].unstack()
+            first_output_results = results['open_price'].unstack()
+            second_output_results = results['close_price'].unstack()
+
+            first_output_expected = create_expected_results(
+                constants[open], mask_results,
+            )
+            second_output_expected = create_expected_results(
+                constants[close], mask_results,
+            )
+
+            assert_frame_equal(first_output_results, first_output_expected)
+            assert_frame_equal(second_output_results, second_output_expected)
 
     def test_loader_given_multiple_columns(self):
 
