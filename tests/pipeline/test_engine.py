@@ -46,14 +46,9 @@ from zipline.pipeline.loaders.synthetic import (
     NullAdjustmentReader,
     SyntheticDailyBarWriter,
 )
-from zipline.pipeline import Pipeline
+from zipline.pipeline import CustomFactor, Pipeline
 from zipline.pipeline.data import USEquityPricing, DataSet, Column
-from zipline.pipeline.loaders.frame import DataFrameLoader
-from zipline.pipeline.loaders.equity_pricing_loader import (
-    USEquityPricingLoader,
-)
 from zipline.pipeline.engine import SimplePipelineEngine
-from zipline.pipeline import CustomFactor
 from zipline.pipeline.factors import (
     AverageDollarVolume,
     EWMA,
@@ -63,6 +58,10 @@ from zipline.pipeline.factors import (
     MaxDrawdown,
     SimpleMovingAverage,
 )
+from zipline.pipeline.loaders.equity_pricing_loader import (
+    USEquityPricingLoader,
+)
+from zipline.pipeline.loaders.frame import DataFrameLoader
 from zipline.testing import (
     make_rotating_equity_info,
     make_simple_equity_info,
@@ -115,11 +114,11 @@ class OpenPrice(CustomFactor):
 class MultipleOutputs(CustomFactor):
     window_length = 1
     inputs = [USEquityPricing.open, USEquityPricing.close]
-    outputs = ['double_open', 'double_close']
+    outputs = ['open', 'close']
 
     def compute(self, today, assets, out, open, close):
-        out.double_open[:] = open * 2
-        out.double_close[:] = close * 2
+        out.open[:] = open
+        out.close[:] = close
 
 
 def assert_multi_index_is_product(testcase, index, *levels):
@@ -520,6 +519,28 @@ class ConstantInputTestCase(TestCase):
                 ),
             )
 
+    def test_factor_with_single_output(self):
+        dates = self.dates[5:10]
+        assets = self.assets
+        num_dates = len(dates)
+        open = USEquityPricing.open
+        open_values = array([self.constants[open]] * num_dates, dtype=float)
+        engine = SimplePipelineEngine(
+            lambda column: self.loader, self.dates, self.asset_finder,
+        )
+
+        single_output = OpenPrice(outputs=['open'])
+        pipeline = Pipeline(columns={'open': single_output.open})
+
+        results = engine.run_pipeline(pipeline, dates[0], dates[-1])
+        output_results = results['open'].unstack()
+        output_expected = {asset: open_values for asset in assets}
+
+        assert_frame_equal(
+            output_results,
+            DataFrame(output_expected, index=dates, columns=assets),
+        )
+
     def test_factor_with_multiple_outputs(self):
         dates = self.dates[5:10]
         assets = self.assets
@@ -532,20 +553,24 @@ class ConstantInputTestCase(TestCase):
             lambda column: self.loader, self.dates, self.asset_finder,
         )
 
-        double_open, double_close = MultipleOutputs()
+        multiple_outputs = MultipleOutputs()
+        open_price, close_price = MultipleOutputs()
+
+        # Ensure that both methods of accessing our outputs return the same
+        # things.
+        self.assertIs(open_price, multiple_outputs.open)
+        self.assertIs(close_price, multiple_outputs.close)
+
         pipeline = Pipeline(
-            columns={
-                'double_open': double_open,
-                'double_close': double_close,
-            },
+            columns={'open_price': open_price, 'close_price': close_price},
         )
 
         results = engine.run_pipeline(pipeline, dates[0], dates[-1])
-        first_output_results = results['double_open'].unstack()
-        second_output_results = results['double_close'].unstack()
+        first_output_results = results['open_price'].unstack()
+        second_output_results = results['close_price'].unstack()
 
-        first_output_expected = {asset: open_values * 2 for asset in assets}
-        second_output_expected = {asset: close_values * 2 for asset in assets}
+        first_output_expected = {asset: open_values for asset in assets}
+        second_output_expected = {asset: close_values for asset in assets}
 
         assert_frame_equal(
             first_output_results,
@@ -555,6 +580,50 @@ class ConstantInputTestCase(TestCase):
             second_output_results,
             DataFrame(second_output_expected, index=dates, columns=assets),
         )
+
+    def test_factor_with_multiple_outputs_and_mask(self):
+        dates = self.dates[5:10]
+        assets = self.assets
+        constants = self.constants
+        open = USEquityPricing.open
+        close = USEquityPricing.close
+        engine = SimplePipelineEngine(
+            lambda column: self.loader, self.dates, self.asset_finder,
+        )
+
+        def create_expected_results(expected_value, mask):
+            expected_values = where(mask, expected_value, nan)
+            return DataFrame(expected_values, index=dates, columns=assets)
+
+        mask = (AssetIDPlusDay() % 2).eq(0)
+        multiple_outputs = MultipleOutputs(mask=mask)
+        open_price, close_price = MultipleOutputs(mask=mask)
+
+        # Ensure that both methods of accessing our outputs return the same
+        # things.
+        self.assertIs(open_price, multiple_outputs.open)
+        self.assertIs(close_price, multiple_outputs.close)
+
+        pipeline = Pipeline(
+            columns={
+                'open_price': open_price,
+                'close_price': close_price,
+                'mask': mask,
+            },
+        )
+
+        results = engine.run_pipeline(pipeline, dates[0], dates[-1])
+        mask_results = results['mask'].unstack()
+        first_output_results = results['open_price'].unstack()
+        second_output_results = results['close_price'].unstack()
+
+        first_output_expected = create_expected_results(constants[open],
+                                                        mask_results)
+        second_output_expected = create_expected_results(constants[close],
+                                                         mask_results)
+
+        assert_frame_equal(first_output_results, first_output_expected)
+        assert_frame_equal(second_output_results, second_output_expected)
 
     def test_loader_given_multiple_columns(self):
 
