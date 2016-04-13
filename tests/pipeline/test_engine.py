@@ -13,7 +13,6 @@ from numpy import (
     concatenate,
     float32,
     full,
-    full_like,
     log,
     nan,
     tile,
@@ -546,9 +545,11 @@ class ConstantInputTestCase(TestCase):
         dates = self.dates[5:10]
         assets = self.assets
         asset_ids = self.asset_ids
+        constants = self.constants
+        num_dates = len(dates)
+        num_assets = len(assets)
         open = USEquityPricing.open
         close = USEquityPricing.close
-        constants = self.constants
         engine = SimplePipelineEngine(
             lambda column: self.loader, self.dates, self.asset_finder,
         )
@@ -574,16 +575,16 @@ class ConstantInputTestCase(TestCase):
         second_output_results = results['close_price'].unstack()
 
         first_output_expected = create_expected_results(
-            constants[open], full_like(first_output_results, True),
+            constants[open], full((num_dates, num_assets), True),
         )
         second_output_expected = create_expected_results(
-            constants[close], full_like(second_output_results, True),
+            constants[close], full((num_dates, num_assets), True),
         )
 
         assert_frame_equal(first_output_results, first_output_expected)
         assert_frame_equal(second_output_results, second_output_expected)
 
-        # Now test the same outputs again, but with a mask.
+        # Now test the same outputs again, but with different masks.
         alternating_mask = (AssetIDPlusDay() % 2).eq(0)
         cascading_mask = AssetIDPlusDay() < (asset_ids[-1] + dates[0].day)
 
