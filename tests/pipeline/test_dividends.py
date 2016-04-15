@@ -204,14 +204,14 @@ class DividendsByAnnouncementDateTestCase(WithPipelineEventDataLoader,
                               ['NaT', '2014-01-04', '2014-01-14'],
                               ['NaT', '2014-01-04']]
         amounts = [['NaN', 1, 15], ['NaN', 7, 13], ['NaN', 3, 1], ['NaN', 23]]
-        cols = {}
-        cols[PREVIOUS_ANNOUNCEMENT] = self.get_sids_to_frames(
-            zip_with_dates, announcement_dates, date_intervals, dates
-        )
-
-        cols[PREVIOUS_AMOUNT] = self.get_sids_to_frames(
-            zip_with_floats, amounts, date_intervals, dates
-        )
+        cols = {
+            PREVIOUS_ANNOUNCEMENT: self.get_sids_to_frames(
+                zip_with_dates, announcement_dates, date_intervals, dates
+            ),
+            PREVIOUS_AMOUNT: self.get_sids_to_frames(
+                zip_with_floats, amounts, date_intervals, dates
+            ),
+        }
 
         cols[
             DAYS_SINCE_PREV_DIVIDEND_ANNOUNCEMENT
@@ -277,27 +277,26 @@ class DividendsByExDateTestCase(WithPipelineEventDataLoader, ZiplineTestCase):
     loader_type = DividendsByExDateLoader
 
     def setup(self, dates):
-        cols = {}
-        cols[NEXT_EX_DATE] = self.get_sids_to_frames(
-            zip_with_dates, next_ex_and_pay_dates, next_date_intervals, dates,
-        )
-
-        cols[PREVIOUS_EX_DATE] = self.get_sids_to_frames(
-            zip_with_dates, prev_ex_and_pay_dates, prev_date_intervals, dates
-        )
-
-        cols[NEXT_AMOUNT] = self.get_sids_to_frames(
-            zip_with_floats, next_amounts, next_date_intervals, dates
-        )
-
-        cols[PREVIOUS_AMOUNT] = self.get_sids_to_frames(
-            zip_with_floats, prev_amounts, prev_date_intervals, dates
-        )
+        cols = {
+            NEXT_EX_DATE: self.get_sids_to_frames(
+                zip_with_dates, next_ex_and_pay_dates, next_date_intervals,
+                dates,
+            ),
+            PREVIOUS_EX_DATE: self.get_sids_to_frames(
+                zip_with_dates, prev_ex_and_pay_dates, prev_date_intervals,
+                dates
+            ),
+            NEXT_AMOUNT: self.get_sids_to_frames(
+                zip_with_floats, next_amounts, next_date_intervals, dates
+            ),
+            PREVIOUS_AMOUNT: self.get_sids_to_frames(
+                zip_with_floats, prev_amounts, prev_date_intervals, dates
+            )
+        }
 
         cols[DAYS_TO_NEXT_EX_DATE] = self._compute_busday_offsets(
             cols[NEXT_EX_DATE]
         )
-
         cols[DAYS_SINCE_PREV_EX_DATE] = self._compute_busday_offsets(
             cols[PREVIOUS_EX_DATE]
         )
@@ -358,22 +357,22 @@ class DividendsByPayDateTestCase(WithPipelineEventDataLoader, ZiplineTestCase):
     loader_type = DividendsByPayDateLoader
 
     def setup(self, dates):
-        cols = {}
-        cols[NEXT_PAY_DATE] = self.get_sids_to_frames(
-            zip_with_dates, next_ex_and_pay_dates, next_date_intervals, dates
-        )
-        cols[PREVIOUS_PAY_DATE] = self.get_sids_to_frames(
-            zip_with_dates, prev_ex_and_pay_dates, prev_date_intervals, dates
-        )
-
-        cols[NEXT_AMOUNT] = self.get_sids_to_frames(
-            zip_with_floats, next_amounts, next_date_intervals, dates
-        )
-
-        cols[PREVIOUS_AMOUNT] = self.get_sids_to_frames(
-            zip_with_floats, prev_amounts, prev_date_intervals, dates
-        )
-        return cols
+        return {
+            NEXT_PAY_DATE: self.get_sids_to_frames(
+                zip_with_dates, next_ex_and_pay_dates, next_date_intervals,
+                dates
+            ),
+            PREVIOUS_PAY_DATE: self.get_sids_to_frames(
+                zip_with_dates, prev_ex_and_pay_dates, prev_date_intervals,
+                dates
+            ),
+            NEXT_AMOUNT: self.get_sids_to_frames(
+                zip_with_floats, next_amounts, next_date_intervals, dates
+            ),
+            PREVIOUS_AMOUNT: self.get_sids_to_frames(
+                zip_with_floats, prev_amounts, prev_date_intervals, dates
+            )
+        }
 
 
 class BlazeDividendsByPayDateLoaderTestCase(DividendsByPayDateTestCase):

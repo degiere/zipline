@@ -42,8 +42,6 @@ from zipline.testing.fixtures import (
     WithNextAndPreviousEventDataLoader
 )
 
-PREVIOUS_PREFIX = "previous"
-
 earnings_estimates_cases = [
     # K1--K2--A1--A2.
     pd.DataFrame({
@@ -281,21 +279,16 @@ class EarningsEstimatesLoaderTestCase(WithNextAndPreviousEventDataLoader,
     loader_type = EarningsEstimatesLoader
 
     def setup(self, dates):
-        _expected_next_release_date = self.get_expected_next_event_dates(dates)
-
-        _expected_previous_release_date = \
-            self.get_expected_previous_event_dates(
-                dates
-            )
-
-        cols = {}
-        cols[PREVIOUS_RELEASE_DATE] = _expected_previous_release_date
-        cols[NEXT_RELEASE_DATE] = _expected_next_release_date
+        cols = {
+            PREVIOUS_RELEASE_DATE:
+                self.get_expected_previous_event_dates(dates),
+            NEXT_RELEASE_DATE: self.get_expected_next_event_dates(dates)
+        }
         for field_name in field_name_to_expected_col:
             cols[field_name] = self.get_sids_to_frames(
                 zip_with_floats, field_name_to_expected_col[field_name],
                 self.prev_date_intervals
-                if field_name.startswith(PREVIOUS_PREFIX)
+                if field_name.startswith("previous")
                 else self.next_date_intervals,
                 dates
             )

@@ -477,7 +477,8 @@ class WithPipelineEventDataLoader(WithAssetFinder):
             An iterable with values that correspond to each interval in
             `date_intervals`.
         date_intervals: list
-            A list of date intervals that correspond to values in `vals`.
+            A list of date intervals for each sid that correspond to values in
+            `vals`.
         dates: DatetimeIndex
             The dates which will serve as the index for each Series for each
             sid in the DataFrame.
@@ -571,8 +572,8 @@ class WithNextAndPreviousEventDataLoader(WithPipelineEventDataLoader):
     on the dates given in `base_cases`.
     `next_dates` gives the next date from `other_date` which is known about at
     each interval.
-    `prev_date_intervals` gives the date intervals for the next event based
-    on the dates given in `base_cases`.
+    `prev_date_intervals` gives the date intervals for each sid for the
+    previous event based on the dates given in `base_cases`.
     `prev_dates` gives the previous date from `other_date` which is known
     about at each interval.
     `get_expected_previous_event_dates` is a convenience function that fills

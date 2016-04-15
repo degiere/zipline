@@ -91,18 +91,17 @@ class CashBuybackAuthLoaderTestCase(WithPipelineEventDataLoader,
     loader_type = CashBuybackAuthorizationsLoader
 
     def setup(self, dates):
-        cols = {}
-        _expected_previous_cash = self.get_sids_to_frames(zip_with_floats,
-                                                          [['NaN', 10, 20]],
-                                                          date_intervals,
-                                                          dates)
-        cols[
-            PREVIOUS_BUYBACK_ANNOUNCEMENT
-        ] = self.get_sids_to_frames(zip_with_dates,
-                                    [['NaT', '2014-01-04', '2014-01-09']],
-                                    date_intervals,
-                                    dates)
-        cols[PREVIOUS_BUYBACK_CASH] = _expected_previous_cash
+        cols = {
+            PREVIOUS_BUYBACK_CASH: self.get_sids_to_frames(zip_with_floats,
+                                                           [['NaN', 10, 20]],
+                                                           date_intervals,
+                                                           dates),
+            PREVIOUS_BUYBACK_ANNOUNCEMENT: self.get_sids_to_frames(
+                zip_with_dates,
+                [['NaT', '2014-01-04', '2014-01-09']],
+                date_intervals,
+                dates),
+        }
         cols[DAYS_SINCE_PREV] = self._compute_busday_offsets(
             cols[PREVIOUS_BUYBACK_ANNOUNCEMENT]
         )
@@ -137,19 +136,18 @@ class ShareBuybackAuthLoaderTestCase(WithPipelineEventDataLoader,
     loader_type = ShareBuybackAuthorizationsLoader
 
     def setup(self, dates):
-        cols = {}
-        cols[
-            PREVIOUS_BUYBACK_SHARE_COUNT
-        ] = self.get_sids_to_frames(zip_with_floats,
-                                    [['NaN', 1, 15]],
-                                    date_intervals,
-                                    dates,)
-        cols[
-            PREVIOUS_BUYBACK_ANNOUNCEMENT
-        ] = self.get_sids_to_frames(zip_with_dates,
-                                    [['NaT', '2014-01-04', '2014-01-09']],
-                                    date_intervals,
-                                    dates,)
+        cols = {PREVIOUS_BUYBACK_SHARE_COUNT:
+                self.get_sids_to_frames(zip_with_floats,
+                                        [['NaN', 1, 15]],
+                                        date_intervals,
+                                        dates,),
+                PREVIOUS_BUYBACK_ANNOUNCEMENT:
+                self.get_sids_to_frames(zip_with_dates,
+                                        [['NaT', '2014-01-04', '2014-01-09']],
+                                        date_intervals,
+                                        dates,),
+                }
+
         cols[DAYS_SINCE_PREV] = self._compute_busday_offsets(
             cols[PREVIOUS_BUYBACK_ANNOUNCEMENT]
         )
